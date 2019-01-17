@@ -5,3 +5,4 @@ authors = ["DiveFish <DiveFish@users.noreply.github.com>"]
 
 [dependencies]
 clap = "2.31.2"
+bincode = "1.0.1"
