@@ -1,13 +1,13 @@
 extern crate bincode;
 
-use std::fs::File;
 use std::collections::HashSet;
-use std::io::{BufReader, BufRead};
-use std::io::Write;
-use std::fs;
-use std::fs::OpenOptions;
 use std::error::Error;
+use std::fs;
+use std::fs::File;
+use std::fs::OpenOptions;
 use std::io;
+use std::io::Write;
+use std::io::{BufRead, BufReader};
 
 /// Read 1-column contents of a file into a set.
 pub fn file2set(filename: &str) -> HashSet<String> {
@@ -64,7 +64,11 @@ pub fn file2f64_list(filename: &str) -> Vec<f64> {
     let file = File::open(filename).expect("Could not open file");
     let mut contents = Vec::new();
     for line in BufReader::new(file).lines() {
-        contents.push(line.expect("Could not read line").parse::<f64>().expect("Could not parse value"));
+        contents.push(
+            line.expect("Could not read line")
+                .parse::<f64>()
+                .expect("Could not parse value"),
+        );
     }
     contents
 }
@@ -77,8 +81,18 @@ pub fn file2f64_lists(filename: &str) -> (Vec<f64>, Vec<f64>) {
     for line in BufReader::new(file).lines() {
         let line = line.expect("Could not read line");
         let line_split = line.split(" ").collect::<Vec<_>>();
-        col1_set.push(line_split[0].to_string().parse::<f64>().expect("Could not parse value"));
-        col2_set.push(line_split[1].to_string().parse::<f64>().expect("Could not parse value"));
+        col1_set.push(
+            line_split[0]
+                .to_string()
+                .parse::<f64>()
+                .expect("Could not parse value"),
+        );
+        col2_set.push(
+            line_split[1]
+                .to_string()
+                .parse::<f64>()
+                .expect("Could not parse value"),
+        );
     }
 
     (col1_set, col2_set)
@@ -86,8 +100,7 @@ pub fn file2f64_lists(filename: &str) -> (Vec<f64>, Vec<f64>) {
 
 /// Write list of floats to binary file.
 pub fn f64_list2file(float_list: &[f64], filename: &str) -> io::Result<()> {
-
-    if ! filename.ends_with("bin") {
+    if !filename.ends_with("bin") {
         eprintln!("Provide binary file name");
     }
 

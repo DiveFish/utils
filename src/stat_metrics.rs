@@ -1,7 +1,6 @@
 use test::stats::Summary;
 
 pub fn spearman(x_list: &[f64], y_list: &[f64]) -> f64 {
-
     assert_eq!(x_list.len(), y_list.len());
 
     let x_mean = Summary::new(x_list).mean as f64;

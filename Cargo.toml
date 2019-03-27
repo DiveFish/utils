@@ -4,5 +4,12 @@ version = "0.1.0"
 authors = ["DiveFish <DiveFish@users.noreply.github.com>"]
 
 [dependencies]
-clap = "2.31.2"
 bincode = "1.0.1"
+clap = "2.31.2"
+conllx = "0.10"
+failure = "0.1"
+ndarray = "0.12"
+rust2vec = "0.5.1"
+stdinout = "0.4"
+tensorflow = "0.10.0"
+tf-embed = { git = "https://github.com/danieldk/tf-embed-rs", tag = "v0.4.0" }
