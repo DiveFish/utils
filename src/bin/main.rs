@@ -5,15 +5,14 @@ extern crate utils;
 
 use std::fs::File;
 use std::io::BufWriter;
-use std::path::Path;
 use stdinout::OrExit;
 
 use clap::{App, Arg};
-use rust2vec::embeddings::Embeddings;
-use rust2vec::io::WriteEmbeddings;
-use rust2vec::prelude::WriteWord2Vec;
 
-use utils::{load_w2v_embeddings, read_w2v};
+use utils::{
+    bin_to_fifu, cmp_embeds, create_splits, load_w2v_embeddings, n_most_sim_embeds, read_w2v,
+    read_w2v_vocab,
+};
 
 fn main() {
     let matches = App::new("utils")
@@ -43,40 +42,85 @@ fn main() {
     //let corr = spearman(&x_list, &y_list);
     //println!("Spearman correlation: {}", corr);
 
-    //let list = create_splits(matches.value_of("INPUT_FILE").expect("File not found"));
     //f64_list2file(&list, matches.value_of("OUTPUT_FILE").expect("File not found"));
 
     let input_dir = matches
         .value_of("INPUT_DIR")
-        .expect("Could not read directory");
-
+        .expect("Could not read input directory");
     let output_dir = matches
         .value_of("OUTPUT_DIR")
-        .expect("Could not read directory");
+        .expect("Could not read output directory");
+
+    // Remember to set the output directories correctly in the method itself!
+    //let list = create_splits(input_dir, &[2, 2, 6]);
+
     /*
-    let splits: Vec<usize> = matches
-        .value_of("SPLITS")
-        .expect("Could not read splits")
-        .split("-")
-        .map(|tag| tag.trim().to_owned().parse::<usize>().unwrap())
-        .collect();
-    create_splits(Path::new(input_dir), Path::new(output_dir), &splits);
+    let focus_words = vec![
+        "isst".to_string(),
+        "isst".to_string(),
+        "trinkt".to_string(),
+        "trinkt".to_string(),
+        "weiß".to_string(),
+        "weiß".to_string(),
+        "isst".to_string(),
+        "isst".to_string(),
+        "trinkt".to_string(),
+        "trinkt".to_string(),
+        "weiß".to_string(),
+        "weiß".to_string(),
+        "führte".to_string(),
+        "führte".to_string(),
+        "erstatteten".to_string(),
+        "erstatteten".to_string(),
+        "erstatteten".to_string(),
+        "erstatteten".to_string(),
+        "wollte".to_string(),
+        "wollte".to_string(),
+        "wollte".to_string(),
+        "wollte".to_string(),
+        "tragen".to_string(),
+        "tragen".to_string(),
+        "tragen".to_string(),
+        "tragen".to_string(),
+    ];
+    let context_words = vec![
+        "Regular_SUBJ_sie".to_string(),
+        "Regular_OBJA_sie".to_string(),
+        "Regular_SUBJ_Mann".to_string(),
+        "Regular_OBJA_Mann".to_string(),
+        "Regular_SUBJ_Computer".to_string(),
+        "Regular_OBJA_Computer".to_string(),
+        "Regular_SUBJ_Spaghetti".to_string(),
+        "Regular_OBJA_Spaghetti".to_string(),
+        "Regular_SUBJ_Milch".to_string(),
+        "Regular_OBJA_Milch".to_string(),
+        "Regular_SUBJ_alles".to_string(),
+        "Regular_OBJA_alles".to_string(),
+        "Regular_SUBJ_Gespräch".to_string(),
+        "Regular_OBJA_Gespräch".to_string(),
+        "Regular_SUBJ_Angeklagten".to_string(),
+        "Regular_OBJA_Angeklagten".to_string(),
+        "Regular_SUBJ_Strafanzeige".to_string(),
+        "Regular_OBJA_Strafanzeige".to_string(),
+        "Regular_SUBJ_niemand".to_string(),
+        "Regular_OBJA_niemand".to_string(),
+        "Regular_SUBJ_Krempel".to_string(),
+        "Regular_OBJA_Krempel".to_string(),
+        "Regular_SUBJ_Studierenden".to_string(),
+        "Regular_OBJA_Studierenden".to_string(),
+        "Regular_SUBJ_Risiko".to_string(),
+        "Regular_OBJA_Risiko".to_string(),
+    ];
+
+    cmp_embeds(focus_words, context_words, input_dir, output_dir)
+        .or_exit("Could not retrieve most similar words", 1);
+    //n_most_sim_embeds("isst", 10,input_dir, output_dir).or_exit("Could not retrieve most similar words", 1);
+
+    //n_most_sim_embeds("isst", 5, input_dir);
     */
-    let embeddings = load_w2v_embeddings(input_dir).or_exit("Cannot read from embeddings file", 1);
-    //let embeddings = read_w2v(input_dir).or_exit("Cannot read from embeddings file", 1);
+    n_most_sim_embeds("Post", 20, input_dir, output_dir);
+    n_most_sim_embeds("Post", 20, input_dir, input_dir);
 
-    let f = File::create(output_dir).or_exit("Cannot write to embeddings file", 1);
-
-    let mut writer = BufWriter::new(f);
-    if output_dir.ends_with("bin") {
-        embeddings
-            .write_word2vec_binary(&mut writer)
-            .or_exit("Cannot write embedding to file", 1);
-    } else if output_dir.ends_with("fifu") {
-        embeddings
-            .write_embeddings(&mut writer)
-            .or_exit("Cannot write embedding to file", 1);
-    } else {
-        eprintln!("Provide either bin or fifu output");
-    }
+    //let embeddings = load_w2v_embeddings(input_dir).or_exit("Cannot read from embeddings file", 1);
+    //bin_to_fifu(output_dir, embeddings);
 }

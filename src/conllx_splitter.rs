@@ -11,10 +11,10 @@ use std::io::BufWriter;
 use std::path::Path;
 use std::process;
 
-pub fn create_splits(input_dir: &Path, output_dir: &Path, splits: &[usize]) -> io::Result<()> {
-    eprintln!("{:?} {:?}", input_dir, output_dir);
+pub fn create_splits(input_dir: &str, splits: &[usize]) -> io::Result<()> {
     let mut all_sents = Vec::new();
 
+    let input_dir = Path::new(input_dir);
     if input_dir.is_dir() {
         for entry in fs::read_dir(input_dir).unwrap() {
             let path = entry.unwrap().path();
@@ -38,6 +38,16 @@ pub fn create_splits(input_dir: &Path, output_dir: &Path, splits: &[usize]) -> i
                 }
             }
         }
+    } else if input_dir.is_file() {
+        let reader = conllx::Reader::new(BufReader::new(
+            File::open(input_dir).expect("Couldn't open file"),
+        ));
+        let mut sents: Vec<_> = reader
+            .into_iter()
+            .map(|r| r.expect("Could not read sentence"))
+            .collect();
+
+        all_sents.append(&mut sents);
     }
 
     let total = all_sents.len();
@@ -46,10 +56,11 @@ pub fn create_splits(input_dir: &Path, output_dir: &Path, splits: &[usize]) -> i
     let test_size = total - (train_size + validation_size);
 
     let train_file =
-        "/Users/patricia/RustProjects/dpar/dpar-utils/testdata/tueba-dz/parts/7-1-2/train-7.conll";
-    let validate_file = "/Users/patricia/RustProjects/dpar/dpar-utils/testdata/tueba-dz/parts/7-1-2/validation-1.conll";
+        "/Users/patricia/Data/hamburg-dependency-treebank-conll/2-2-6//hdt-train-2.conll";
+    let validate_file =
+        "/Users/patricia/Data/hamburg-dependency-treebank-conll/2-2-6/hdt-validation-2.conll";
     let test_file =
-        "/Users/patricia/RustProjects/dpar/dpar-utils/testdata/tueba-dz/parts/7-1-2/test-2.conll";
+        "/Users/patricia/Data/hamburg-dependency-treebank-conll/2-2-6//hdt-test-6.conll";
 
     let mut idx = 0;
     let mut writer = conllx::Writer::new(BufWriter::new(or_exit(File::create(train_file))));
