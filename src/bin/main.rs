@@ -6,13 +6,9 @@ extern crate utils;
 use std::fs::File;
 use std::io::BufWriter;
 use stdinout::OrExit;
-
 use clap::{App, Arg};
 
-use utils::{
-    bin_to_fifu, cmp_embeds, create_splits, load_w2v_embeddings, n_most_sim_embeds, read_w2v,
-    read_w2v_vocab,
-};
+use utils::*;
 
 fn main() {
     let matches = App::new("utils")
@@ -51,9 +47,34 @@ fn main() {
         .value_of("OUTPUT_DIR")
         .expect("Could not read output directory");
 
+    //let embeddings = load_fifu(input_dir).or_exit("Cannot read from embeddings file", 1);
+    //write_fifu_to_w2v(embeddings, output_dir);
+
+    //let embeds = adjust_w2v_embeddings(input_dir).or_exit("Cannot adjust embeddings", 1);
+    //bin_to_fifu(output_dir, embeds);
+
+    //println!("{:?}", embeddings.embedding("Regular_obj_Problem").is_some());
+    //bin_to_fifu(output_dir, embeddings);
+
     // Remember to set the output directories correctly in the method itself!
     //let list = create_splits(input_dir, &[2, 2, 6]);
 
+
+    let focus_words = vec![
+        "vereinigt".to_string(),
+        "Sansibar".to_string(),
+        "vereinigt".to_string(),
+        "Sansibar".to_string(),
+    ];
+    let context_words = vec![
+        "Regular_PP_mit".to_string(),
+        "Regular_PP_mit".to_string(),
+        "Regular_OBJP_mit".to_string(),
+        "Regular_OBJP_mit".to_string(),
+    ];
+
+    cmp_embeds(focus_words, context_words, input_dir, output_dir)
+        .or_exit("Could not retrieve most similar words", 1);
     /*
     let focus_words = vec![
         "isst".to_string(),
@@ -117,10 +138,13 @@ fn main() {
     //n_most_sim_embeds("isst", 10,input_dir, output_dir).or_exit("Could not retrieve most similar words", 1);
 
     //n_most_sim_embeds("isst", 5, input_dir);
-    */
     n_most_sim_embeds("Post", 20, input_dir, output_dir);
     n_most_sim_embeds("Post", 20, input_dir, input_dir);
+    */
 
     //let embeddings = load_w2v_embeddings(input_dir).or_exit("Cannot read from embeddings file", 1);
     //bin_to_fifu(output_dir, embeddings);
+    //let sent_cnt = sent_cnt(input_dir);
+    //let token_cnt = token_cnt(input_dir);
+    //println!("# sents: {}\n# tokens: {}", sent_cnt, token_cnt);
 }

@@ -17,3 +17,17 @@ pub fn spearman(x_list: &[f64], y_list: &[f64]) -> f64 {
 
     numerator / (denominator1.sqrt() * denominator2.sqrt())
 }
+
+pub fn sent_cnt(file: &str) -> usize {
+    let sents = ambiguity_stats::read_sentences(file);
+    sents.len()
+}
+
+pub fn token_cnt(file: &str) -> usize {
+    let sents = ambiguity_stats::read_sentences(file);
+    let mut cnt = 0;
+    for sent in sents {
+        cnt += sent.len();
+    }
+    cnt
+}

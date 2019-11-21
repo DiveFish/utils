@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Read, Seek, SeekFrom};
+use std::io::{BufRead, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::mem;
 use std::slice::from_raw_parts_mut;
 use stdinout::OrExit;
 
+use byteorder::{LittleEndian,WriteBytesExt};
 use failure::{err_msg, Error};
 use ndarray::{Array2, Axis};
+use rust2vec;
 use rust2vec::embeddings;
 use rust2vec::embeddings::Embeddings;
 use rust2vec::io::{WriteEmbeddings, ReadEmbeddings};
@@ -34,6 +36,14 @@ pub fn bin_to_fifu(output_dir: &str, embeddings: Embeddings<SimpleVocab, NdArray
     }
 }
 
+/// Embedding reader for fifu embeddings.
+pub fn load_fifu_embeddings(
+    input_filename: &str,
+) -> Result<rust2vec::embeddings::Embeddings<SimpleVocab, NdArray>, Error> {
+    let mut reader = BufReader::new(File::open(input_filename).unwrap());
+    Ok(Embeddings::read_embeddings(&mut reader).unwrap())
+}
+
 /// Conventional word2vec embedding reader.
 pub fn read_w2v(filename: &str) -> Result<Embeddings<SimpleVocab, NdArray>, Error> {
     let mut reader = BufReader::new(File::open(filename).or_exit("Could not open file", 1));
@@ -47,6 +57,76 @@ pub fn read_w2v(filename: &str) -> Result<Embeddings<SimpleVocab, NdArray>, Erro
         .seek(SeekFrom::Start(0))
         .or_exit("Could not start at 0", 1);
     Embeddings::read_word2vec_binary(&mut reader, false)
+}
+
+/// Add embeddings for null and unknown token to w2v embeddings.
+pub fn adjust_w2v_embeddings(
+    input_filename: &str,
+) -> Result<rust2vec::embeddings::Embeddings<SimpleVocab, NdArray>, Error> {
+    let f = File::open(input_filename).expect("Cannot read file");
+    let mut reader = BufReader::new(f);
+
+    let n_words = read_number(&mut reader, b' ', 0).or_exit("Problems reading n_words", 1);
+    let embed_len = read_number(&mut reader, b'\n', 0).or_exit("Problems reading embed_len", 1);
+
+    let mut matrix = Array2::<f32>::zeros((n_words + 2, embed_len));
+    let mut words = Vec::with_capacity(n_words + 2);
+
+    let mut unknown_embed = Vec::new();
+    for idx in 0..n_words {
+        let word = read_string(&mut reader, b' ', idx)
+            .or_exit(format!("Could not read word at idx {}", idx), 1);
+        let word = word.trim();
+        words.push(word.to_owned());
+        let mut embedding = matrix.index_axis_mut(Axis(0), idx);
+
+        {
+            let mut embedding_raw = match embedding.as_slice_mut() {
+                Some(s) => unsafe { typed_to_bytes(s) },
+                None => return Err(err_msg("Matrix not contiguous")),
+            };
+            reader
+                .read_exact(&mut embedding_raw)
+                .or_exit("Could not read exact embedding", 1);
+        }
+        if idx == 0 {
+            for i in 0..embedding.len() {
+                unknown_embed.push(embedding[i]);
+            }
+        } else {
+            for i in 0..embedding.len() {
+                unknown_embed[i] += embedding[i];
+            }
+        }
+    }
+    {
+        let mut unknown_embed_vec = matrix.index_axis_mut(Axis(0), n_words + 1);
+        for idx in 0..unknown_embed_vec.len() {
+            unknown_embed_vec[idx] += unknown_embed[idx] / n_words as f32;
+        }
+    }
+
+    words.push("<NULL-TOKEN>".to_string()); // Do not modify embedding of null token, cells should remain 0
+    words.push("<UNKNOWN-TOKEN>".to_string()); // Embedding is the average of all embeddings
+
+
+    let embeddings = Embeddings::new(
+        None,
+        SimpleVocab::new(words),
+        NdArray(matrix),
+    );
+
+    /*
+    for (word, embeds) in embeddings.iter() {
+        print!("{:?} ", word);
+        for i in embeds.into_owned().iter() {
+            print!("{} ", i);
+        }
+        println!();
+    }
+    */
+
+    Ok(embeddings)
 }
 
 /// Embedding reader for word2vec embeddings where word and embedding are not split by a space.
@@ -182,6 +262,18 @@ pub fn n_most_sim_embeds(
     }
 
     Ok(())
+}
+
+pub fn get_vocab_size_fifu(filename: &str) -> usize {
+
+    let mut reader = BufReader::new(File::open(filename).unwrap());
+
+    let embeddings: Embeddings<VocabWrap, StorageWrap> =
+        Embeddings::read_embeddings(&mut reader).unwrap();
+
+    let embeds = Embeddings::from(embeddings);
+
+    embeds.vocab().len()
 }
 
 pub fn cmp_embeds(

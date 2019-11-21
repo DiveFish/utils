@@ -5,11 +5,15 @@ authors = ["DiveFish <DiveFish@users.noreply.github.com>"]
 
 [dependencies]
 bincode = "1.0.1"
+byteorder = "1.3.2"
 clap = "2.31.2"
 conllx = "0.10"
 failure = "0.1"
+flate2 = "0.2"
 ndarray = "0.12"
 rust2vec = "0.5.1"
+rust2vec-old = { path = "./rust2vec-old" }
 stdinout = "0.4"
 tensorflow = "0.10.0"
 tf-embed = { git = "https://github.com/danieldk/tf-embed-rs", tag = "v0.4.0" }
+ambiguity-stats = { git = "https://github.com/divefish/ambiguity-stats"}
