@@ -1,10 +1,11 @@
 extern crate conllx;
 
-use conllx::{ReadSentence, Reader, Token};
+use conllx::{DisplaySentence, HeadProjectivizer, Projectivize, ReadSentence, Reader, Token};
 use flate2::read::GzDecoder;
 use std::fs::OpenOptions;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader, Write};
+use stdinout::Input;
 use std::path::Path;
 
 /// Read single file
@@ -107,6 +108,24 @@ fn get_conll_files(dir: &Path, files: &mut Vec<String>) {
         let filename = dir.to_str().unwrap().clone().to_string();
         if filename.ends_with("conll") || filename.ends_with("conll.gz") {
             files.push(filename);
+        }
+    }
+}
+
+pub fn get_proj(path: &str) {
+    let input = Input::from(Some(path));
+    let treebank_reader = conllx::Reader::new(input.buf_read().expect("Cannot open treebank"));
+    let projectivizer = HeadProjectivizer::new();
+
+    for sentence in treebank_reader.sentences() {
+        let sentence = projectivizer.projectivize(&sentence.expect("Could not read sentence")).expect("Could not projectivize sentence");
+
+        for token in sentence {
+            if token.lemma().is_some() {
+                if token.head_rel().unwrap().contains("|") {
+                    println!("{}", token.lemma().unwrap());
+                }
+            }
         }
     }
 }

@@ -47,6 +47,8 @@ fn main() {
         .value_of("OUTPUT_DIR")
         .expect("Could not read output directory");
 
+    get_proj(input_dir);
+
     //let embeddings = load_fifu(input_dir).or_exit("Cannot read from embeddings file", 1);
     //write_fifu_to_w2v(embeddings, output_dir);
 
@@ -59,7 +61,7 @@ fn main() {
     // Remember to set the output directories correctly in the method itself!
     //let list = create_splits(input_dir, &[2, 2, 6]);
 
-
+    /*
     let focus_words = vec![
         "vereinigt".to_string(),
         "Sansibar".to_string(),
@@ -75,7 +77,7 @@ fn main() {
 
     cmp_embeds(focus_words, context_words, input_dir, output_dir)
         .or_exit("Could not retrieve most similar words", 1);
-    /*
+
     let focus_words = vec![
         "isst".to_string(),
         "isst".to_string(),
