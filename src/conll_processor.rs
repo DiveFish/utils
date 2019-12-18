@@ -9,11 +9,35 @@ use stdinout::Input;
 use std::path::Path;
 
 /// Read single file
-pub fn read_conll_file(datafile: &str) -> Vec<Vec<String>> {
+pub fn read_conll_file(datafile: &str) -> Vec<Vec<Token>> {
     read_conll_sentences(datafile)
 }
 
-pub fn read_conll_sentences(filename: &str) -> Vec<Vec<String>> {
+pub fn read_conll_sentences(filename: &str) -> Vec<Vec<Token>> {
+    if filename.ends_with(".conll.gz") {
+        let reader = File::open(filename).expect("Couldn't open file");
+        let boxed_reader = BufReader::new(GzDecoder::new(reader).expect("Couldn't unzip .gz file"));
+        Reader::new(boxed_reader)
+            .sentences()
+            .map(|s| s.unwrap())
+            .collect()
+    } else if filename.ends_with(".conll") {
+        let reader = File::open(filename).expect("Couldn't open file");
+        Reader::new(BufReader::new(reader))
+            .sentences()
+            .map(|s| s.unwrap())
+            .collect()
+    } else {
+        Vec::new()
+    }
+}
+
+/// Read single file
+pub fn read_conll_file_to_string(datafile: &str) -> Vec<Vec<String>> {
+    read_conll_sentences_to_string(datafile)
+}
+
+pub fn read_conll_sentences_to_string(filename: &str) -> Vec<Vec<String>> {
     if filename.ends_with(".conll.gz") {
         let reader = File::open(filename).expect("Couldn't open file");
         let boxed_reader = BufReader::new(GzDecoder::new(reader).expect("Couldn't unzip .gz file"));
@@ -122,7 +146,7 @@ pub fn get_proj(path: &str) {
 
         for token in sentence {
             if token.lemma().is_some() {
-                if token.head_rel().unwrap().contains("|") {
+                if !token.head_rel().unwrap().contains("|") {   // To get non-projective arcs, remove "!"
                     println!("{}", token.lemma().unwrap());
                 }
             }

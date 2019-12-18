@@ -42,6 +42,6 @@ fn main() {
         .value_of("OUTPUT_DIR")
         .expect("Could not read output directory");
 
-    let text = read_conll_file(input_dir);
+    let text = read_conll_file_to_string(input_dir);
     write_conll2txt(&text, output_dir);
 }

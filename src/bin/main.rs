@@ -2,6 +2,7 @@ extern crate clap;
 extern crate rust2vec;
 extern crate stdinout;
 extern crate utils;
+extern crate conllx;
 
 use std::fs::File;
 use std::io::BufWriter;
@@ -9,6 +10,7 @@ use stdinout::OrExit;
 use clap::{App, Arg};
 
 use utils::*;
+use conllx::{WriteSentence, Writer};
 
 fn main() {
     let matches = App::new("utils")
@@ -47,7 +49,27 @@ fn main() {
         .value_of("OUTPUT_DIR")
         .expect("Could not read output directory");
 
-    get_proj(input_dir);
+    let output_file = File::create(&output_dir).expect("Could not create file");
+    let mut writer = Writer::new(Box::new(output_file));
+
+    let files = get_all_files(&input_dir);
+    for file in &files {
+
+        let mut input = read_conll_sentences(file);
+
+        // Reattach punctuation marks from root to closest token
+        for mut sent in &mut input {
+            reattach_punct(&mut sent);
+        }
+
+        for sent in input {
+            writer.write_sentence(&sent).unwrap();
+        }
+    }
+
+
+
+    //get_proj(input_dir);
 
     //let embeddings = load_fifu(input_dir).or_exit("Cannot read from embeddings file", 1);
     //write_fifu_to_w2v(embeddings, output_dir);
